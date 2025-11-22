@@ -1,19 +1,19 @@
+
+
 # Module 4 Main Function Code
 from main_functions import convert_cumulative_to_SIR
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+ ##Load the Ebola_Sierra Leone Data 
+data = pd.read_csv('ebola_sierra_leone_data_2014_2015_cumulative.csv')
+## Display the first few rows of the dataset
+print(data.head())
 
-# %%
-# # Load the Ebola_Sierra Leone Data 
-# data = pd.read_csv('ebola_sierra_leone_data_2014_2015_cumulative.csv')
-# # Display the first few rows of the dataset
-# print(data.head())
-
-# data = data.loc[data["Country/Region"] == "SL"].transpose().reset_index()
-# data = data.drop(index=0)  # drop the 'Country/Region' row
-# data.columns = ['date', 'confirmed_cases']
-# data['date'] = pd.to_datetime(data['date'])
+data = data.loc[data["Country/Region"] == "SL"].transpose().reset_index()
+data = data.drop(index=0)  # drop the 'Country/Region' row
+data.columns = ['date', 'confirmed_cases']
+data['date'] = pd.to_datetime(data['date'])
 
 # %%
 import numpy as np, pandas as pd
