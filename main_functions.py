@@ -78,10 +78,15 @@ def euler_sir(beta, gamma, S0, I0, R0, t, N):
     S[0], I[0], R[0] = S0, I0, R0
     for n in range(len(t) - 1):
         dt = t[n + 1] - t[n]  # dt is our step size (1 day or 1 week)
-        dS = 0  # FILL IN BASED ON SIR MODEL
-        dI = 0  # FILL IN BASED ON SIR MODEL
-        dR = 0  # FILL IN BASED ON SIR MODEL
-        S[n + 1] = 0  # FILL IN BASED ON EULER'S METHOD
-        I[n + 1] = 0  # FILL IN BASED ON EULER'S METHOD
-        R[n + 1] = 0  # FILL IN BASED ON EULER'S METHOD
+
+        # SIR differential equations
+        dS = -beta * S[n] * I[n] / N
+        dI = beta * S[n] * I[n] / N - gamma * I[n]
+        dR = gamma * I[n]
+
+        # Euler update rules
+        S[n + 1] = S[n] + dt * dS
+        I[n + 1] = I[n] + dt * dI
+        R[n + 1] = R[n] + dt * dR
+
     return S, I, R
