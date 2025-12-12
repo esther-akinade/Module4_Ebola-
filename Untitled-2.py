@@ -373,3 +373,117 @@ plt.ylabel('Infections (Thousands)')
 plt.title('Comparison of Euler vs RK45 on Second Half')
 plt.legend()
 plt.show()
+
+
+# %%
+
+
+from scipy.integrate import solve_ivp
+from scipy.optimize import minimize
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------------------------------------
+# 1. SEIR ODE System
+# ------------------------------------------------------------
+def SEIR_ODE(t, y, beta, sigma, gamma, N):
+    S, E, I, R = y
+    dS = -beta * S * I / N
+    dE = beta * S * I / N - sigma * E
+    dI = sigma * E - gamma * I
+    dR = gamma * I
+    return [dS, dE, dI, dR]
+
+
+# ------------------------------------------------------------
+# 2. Simulation Wrapper Using solve_ivp
+# ------------------------------------------------------------
+def simulate_seir_ivp(beta, sigma, gamma, S0, E0, I0, R0, t_eval, N):
+    sol = solve_ivp(
+        fun=lambda t, y: SEIR_ODE(t, y, beta, sigma, gamma, N),
+        t_span=(t_eval[0], t_eval[-1]),
+        y0=[S0, E0, I0, R0],
+        t_eval=t_eval,
+        method='RK45',
+        max_step=1.0
+    )
+    return sol.y  # returns (S(t), E(t), I(t), R(t))
+
+
+# ------------------------------------------------------------
+# 3. Define SSE for the SEIR Model
+# ------------------------------------------------------------
+def SSE_seir(params):
+    beta, sigma, gamma = params
+    
+    # Reject invalid parameter regions
+    if beta <= 0 or sigma <= 0 or gamma <= 0:
+        return 1e12
+
+    try:
+        S_pred, E_pred, I_pred, R_pred = simulate_seir_ivp(
+            beta, sigma, gamma,
+            S0_obs, E0_est, I0_obs, R0_obs,
+            t_obs, N
+        )
+    except:
+        return 1e12
+
+    if np.any(np.isnan(I_pred)):
+        return 1e12
+    
+    return np.mean((I_pred - I_obs)**2)
+
+
+# ------------------------------------------------------------
+# 4. Initial Conditions for SEIR
+# ------------------------------------------------------------
+# You already have S0_obs, I0_obs, R0_obs from your previous code
+
+# For E0, assume some small initial exposure level
+E0_est = I0_obs * 2   # (or experiment with 1–5× I0)
+
+print("Initial E0 chosen as:", E0_est)
+
+# ------------------------------------------------------------
+# 5. Fit Parameters (beta, sigma, gamma)
+# ------------------------------------------------------------
+initial_guess = [0.2, 0.1, 0.08]   # beta, sigma, gamma
+bounds = [(0.0001, 5), (0.0001, 1), (0.0001, 1)]
+
+result_seir = minimize(SSE_seir, initial_guess, bounds=bounds, method='L-BFGS-B')
+
+beta_seir, sigma_seir, gamma_seir = result_seir.x
+
+print("\n====================================")
+print("       SEIR OPTIMIZATION RESULTS")
+print("====================================")
+print("Fitted beta  :", beta_seir)
+print("Fitted sigma :", sigma_seir)
+print("Fitted gamma :", gamma_seir)
+print("Minimum SSE  :", result_seir.fun)
+
+# ------------------------------------------------------------
+# 6. Simulate SEIR with Fitted Parameters
+# ------------------------------------------------------------
+S_fit, E_fit, I_fit, R_fit = simulate_seir_ivp(
+    beta_seir, sigma_seir, gamma_seir,
+    S0_obs, E0_est, I0_obs, R0_obs,
+    t_obs, N
+)
+
+# ------------------------------------------------------------
+# 7. Plot Observed vs Fitted I(t)
+# ------------------------------------------------------------
+plt.figure(figsize=(10,5))
+plt.plot(t_obs, I_obs, 'o', label='Observed I(t)')
+plt.plot(t_obs, I_fit, '-', label=f'SEIR Fit β={beta_seir:.3f}, σ={sigma_seir:.3f}, γ={gamma_seir:.3f}')
+
+plt.xlabel('Days')
+plt.ylabel('Infections (Individuals)')
+plt.title('SEIR Model Fit (solve_ivp / RK45)')
+plt.legend()
+plt.show()
+
+print("\nFinal SSE (SEIR):", np.mean((I_fit - I_obs)**2))
+# %%
