@@ -374,10 +374,6 @@ plt.title('Comparison of Euler vs RK45 on Second Half')
 plt.legend()
 plt.show()
 
-
-# %%
-
-
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize
 import numpy as np
@@ -448,7 +444,7 @@ print("Initial E0 chosen as:", E0_est)
 # ------------------------------------------------------------
 # 5. Fit Parameters (beta, sigma, gamma)
 # ------------------------------------------------------------
-initial_guess = [0.2, 0.1, 0.08]   # beta, sigma, gamma
+initial_guess = [0.3, 0.2, 0.1]   # beta, sigma, gamma
 bounds = [(0.0001, 5), (0.0001, 1), (0.0001, 1)]
 
 result_seir = minimize(SSE_seir, initial_guess, bounds=bounds, method='L-BFGS-B')
@@ -486,4 +482,3 @@ plt.legend()
 plt.show()
 
 print("\nFinal SSE (SEIR):", np.mean((I_fit - I_obs)**2))
-# %%
